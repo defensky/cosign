@@ -1,37 +1,24 @@
-name: "Frogbot Security Scan"
-
+name: "Frogbot Scan Pull Request"
 on:
-  pull_request_target: 
-    types: [opened, synchronize] # Triggers scan-pr flow for every opened/updated pull request
-  push: # Triggers scan-repo flow for every push to the specified branches
-    branches:
-      - main
-  schedule:
-    - cron: "0 0 * * *"   # The repository will be scanned once a day at 00:00 GMT.
-  workflow_dispatch: # The repository will be scanned on demand
-
+  pull_request_target:
+    types: [ opened, synchronize ]
 permissions:
   pull-requests: write
-  contents: write
-  security-events: write
-  # [Mandatory If using OIDC authentication protocol instead of JF_ACCESS_TOKEN]
-  # id-token: write
-
+  contents: read
+  id-token: write
 jobs:
-  frogbot-scan:
+  scan-pull-request:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # The repository scanning will be triggered periodically on the following branches.
-        branch: ["main"]
+    environment: frogbot
     steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
       - uses: jfrog/frogbot@v2
-        # [Mandatory if using OIDC authentication protocol instead of JF_ACCESS_TOKEN]
-        # Insert to oidc-provider-name the 'Provider Name' defined in the OIDC integration configured in the JPD
-        # with:
-        #   oidc-provider-name: ""
+        with:
+          oidc-provider-name: jfrog-github-oidc  # only if using OIDC
         env:
-          JF_URL: ${{ secrets.JF_URL }}
-          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+          JF_URL: https://${{ vars.JF_URL }}/
+          JF_PROJECT: ${{ vars.JF_PROJECT }}
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JF_GIT_BASE_BRANCH: ${{ matrix.branch }}    # For repository scan action
