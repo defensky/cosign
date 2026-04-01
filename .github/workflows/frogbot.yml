@@ -1,24 +1,28 @@
-name: "Frogbot Scan Pull Request"
+name: "Frogbot Security Scan"
+
 on:
-  pull_request_target:
-    types: [ opened, synchronize ]
+  pull_request_target: 
+    types: [opened, synchronize]
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
 permissions:
   pull-requests: write
-  contents: read
-  id-token: write
-jobs:
-  scan-pull-request:
-    runs-on: ubuntu-latest
-    environment: frogbot
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+  contents: write
+  security-events: write
 
+jobs:
+  frogbot-scan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch: ["main"]
+    steps:
       - uses: jfrog/frogbot@v2
-        with:
-          oidc-provider-name: jfrog-github-oidc  # only if using OIDC
         env:
-          JF_URL: https://${{ vars.JF_URL }}/
-          JF_PROJECT: ${{ vars.JF_PROJECT }}
-          JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JF_URL: ${{ secrets.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+          JF_GIT_TOKEN: ${{ secrets.JF_GIT_TOKEN }}
+          JF_GIT_BASE_BRANCH: ${{ matrix.branch }}
