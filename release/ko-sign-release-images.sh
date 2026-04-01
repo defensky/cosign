@@ -17,7 +17,7 @@
 set -o errexit
 set -o nounset
 set -o pipefail
-
+#adding the new variables to the branch 
 : "${GIT_HASH:?Environment variable empty or not defined.}"
 : "${GIT_VERSION:?Environment variable empty or not defined.}"
 : "${PROJECT_ID:?Environment variable empty or not defined.}"
